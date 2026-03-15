@@ -1,6 +1,7 @@
 # Python-ATM-Machine
 
 A command-line ATM system I built to practice Python. It uses `json` to actually save and remember user accounts, balances, and PINs between sessions
+
 **What this project does:**
 1. **Persistent Data Storage:** Uses `json` to read and write user balances and PINs to an `atm_details.json` file.
 2. **Account Creation:** New users can register, set a PIN, and get an auto-generated User ID.
