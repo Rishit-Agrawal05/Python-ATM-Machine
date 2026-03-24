@@ -24,24 +24,33 @@ atm_data = {
         }
     }
 }
-if os.path.exists("atm_details.json"):
-    with open("atm_details.json", "r") as f:
-        data = json.load(f)
-else:
-    data = atm_data  
-    with open("atm_details.json", "w") as f:
-        json.dump(data, f, indent=3, sort_keys=True)
+try:
+    if os.path.exists("atm_details.json"):
+        with open("atm_details.json", "r") as f:
+            data = json.load(f)
+    else:
+        data = atm_data  
+        with open("atm_details.json", "w") as f:
+            json.dump(data, f, indent=3, sort_keys=True)
+except json.JSONDecodeError:
+    print("there is some problem with bank database")
+
 def save_data():
     with open("atm_details.json", "w") as f:
         json.dump(data, f, indent=3, sort_keys=True)
 def add_user():
     user_id = str(1000 + data["total_users"] + 1)
-    data["total_users"]+=1
     print(f"your user id is: {user_id}")
     print("remember it for further uses")
     user_name = input("enter your name")
-    balance = int(input("enter your inital balance"))
-    pin = int(input("enter your 4 digit pin"))
+    try:
+        balance = int(input("enter your inital balance"))
+        pin = int(input("enter your 4 digit pin"))
+    except ValueError:
+        print("enter a valid number for balance/pin")
+        return
+    
+    data["total_users"]+=1
     data["users"][user_id] = {
     "balance": balance,
     "name": user_name,
@@ -52,52 +61,64 @@ def add_user():
     print("you have been succesfully registered with the bank !!!")
 def withdraw(user_id):
     user_pin = data["users"][user_id]["pin"]
-    pin = int(input("enter your pin: "))
-    if pin == user_pin:
-        bank_balance = data["bank_vault"]
-        user_balance = data["users"][user_id]["balance"]
-        print(f"your current balance is: {user_balance}")
-        takeout = int(input("enter the amount you want to withdraw"))
-        if takeout > 0 :
-            if takeout > user_balance:
-                print("insufficient funds")
-            else:
-                if takeout> bank_balance:
-                    print("bank does not have sufficent funds...")
-                    print("try again later ")
+    try:
+        pin = int(input("enter your pin: "))
+        if pin == user_pin:
+            bank_balance = data["bank_vault"]
+            user_balance = data["users"][user_id]["balance"]
+            print(f"your current balance is: {user_balance}")
+            takeout = int(input("enter the amount you want to withdraw"))
+            if takeout > 0 :
+                if takeout > user_balance:
+                    print("insufficient funds")
                 else:
-                    data["users"][user_id]["balance"]-= takeout
-                    data["bank_vault"] -= takeout
+                    if takeout> bank_balance:
+                        print("bank does not have sufficent funds...")
+                        print("try again later ")
+                    else:
+                        data["users"][user_id]["balance"]-= takeout
+                        data["bank_vault"] -= takeout
+                        print(f"successfully withdrew {takeout}.")
+            else:
+                print("enter a number greater than ZERO !!!")
         else:
-            print("enter a number greater than ZERO !!!")
-    else:
-        print("wrong pin...")
+            print("wrong pin...")
+    except ValueError:
+        print("ERROR: PIN should be a number")
+        return
     save_data()
 def deposit(user_id):
     user_pin = data["users"][user_id]["pin"]
-    pin = int(input("enter your pin: "))
-    if pin == user_pin:
-        bank_balance = data["bank_vault"]
-        user_balance = data["users"][user_id]["balance"]
-        print(f"your current balance is: {user_balance}")
-        putin = int(input("enter the amount you want to deposit"))
-        if putin >= 0 :
-            data["users"][user_id]["balance"]+= putin
-            data["bank_vault"] += putin
+    try:
+        pin = int(input("enter your pin: "))
+        if pin == user_pin:
+            bank_balance = data["bank_vault"]
+            user_balance = data["users"][user_id]["balance"]
+            print(f"your current balance is: {user_balance}")
+            putin = int(input("enter the amount you want to deposit"))
+            if putin >= 0 :
+                data["users"][user_id]["balance"]+= putin
+                data["bank_vault"] += putin
+            else:
+                print("enter the amount greater than ZERO")
         else:
-            print("enter the amount greater than ZERO")
-    else:
-        print("wrong pin !!!")
+            print("wrong pin !!!")
+    except ValueError:
+        print("ERROR: PIN should be a number")
+        return
     save_data()
 def check_balance(user_id):
     user_balance = data["users"][user_id]["balance"]
     user_name = data["users"][user_id]["name"]
     user_pin = data["users"][user_id]["pin"]
-    pin = int(input("enter your pin"))
-    if pin == user_pin :
-        print(f" {user_name} have {user_balance} in account number {user_id}")
-    else:
-        print("wrong pin ...")
+    try:
+        pin = int(input("enter your pin"))
+        if pin == user_pin :
+            print(f" {user_name} have {user_balance} in account number {user_id}")
+        else:
+            print("wrong pin ...")
+    except ValueError:
+        print("ERROR: PIN should be a number")
 while isrunning:
     user_id = input("enter your user id: ")
     if user_id in data["users"]:
@@ -106,7 +127,12 @@ while isrunning:
         print("2. for deposits ")
         print("3. check balance")
         print("4. exit")
-        user_choice = int(input("enter your choice: "))
+        try:
+            user_choice = int(input("enter your choice: "))
+        except ValueError:
+            print("ERROR: choice should be be a number between 1 and 4")
+            continue
+
         if user_choice == 1:
             withdraw(user_id)
         elif user_choice == 2:
@@ -118,7 +144,6 @@ while isrunning:
             isrunning = False
         else:
             print("enter a valid choice")
-            isrunning = False
     elif user_id == "0000":
         admin_password = input("enter the admin password: ")
         if admin_password == admin:
